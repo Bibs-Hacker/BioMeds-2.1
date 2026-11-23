@@ -36,6 +36,12 @@ begin
     execute format('alter table public.administrator_roles drop constraint %I', c.conname);
   end loop;
 end $$;
+
+-- Normalize the temporary role label BEFORE adding the canonical CHECK.
+-- Otherwise an existing 'admin' row violates the new constraint and aborts
+-- this transaction, rolling back profiles and every other foundation object.
+update public.administrator_roles set role='super_admin' where role='admin';
+
 alter table public.administrator_roles
   alter column role set not null,
   add constraint administrator_roles_role_check
@@ -44,10 +50,6 @@ alter table public.administrator_roles
     check(not is_developer or role='super_admin'),
   add constraint administrator_roles_user_id_fkey
     foreign key(user_id) references public.profiles(id) on delete cascade;
-
--- The earlier setup used the label 'admin'. In this application the matching
--- full-administrator permission level is named 'super_admin'.
-update public.administrator_roles set role='super_admin' where role='admin';
 create unique index if not exists only_one_developer
   on public.administrator_roles(is_developer) where is_developer;
 create table public.registration_settings(id boolean primary key default true check(id),registration_open boolean not null default true,academic_year text not null default '2026/2027' check(academic_year ~ '^[0-9]{4}/[0-9]{4}$'),expected_population integer check(expected_population>0),support_email text not null default '' check(support_email='' or support_email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),class_contact text not null default '' check(length(class_contact)<=160),logo_path text,developer_bio text not null default 'Original System Developer, Platform Manager and Lead System Operator for the MedEng Y2S1 Class Portal.',developer_photo_path text,privacy_notice text not null default 'Your information is used for class registration, verification, membership and academic coordination. Authorized class administrators can access your record. Public verification displays your name, membership ID, course, academic designation and membership status only. Contact class leadership for data access, correction, retention and privacy enquiries.',updated_at timestamptz not null default now());

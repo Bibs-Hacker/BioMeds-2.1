@@ -17,7 +17,7 @@ npm ci
 npm run dev
 ```
 
-1. Back up the Supabase project, then apply **both** migrations in filename order from `supabase/migrations/`. The foundation migration safely reconciles the temporary `administrator_roles` table created during setup and converts the existing `admin` role to `super_admin`.
+1. Back up the Supabase project, then apply **both** migrations in filename order from `supabase/migrations/`. The foundation migration safely reconciles the temporary `administrator_roles` table created during setup, converts the existing `admin` role to `super_admin` before applying the canonical role constraint, and backfills profiles. If a previous run failed on the role constraint, the transaction rolled back; rerun the corrected foundation migration, then run the community migration.
 2. Confirm your own email-confirmed Auth UUID, then run `supabase/provision-existing-admin.sql` only if the migration did not already preserve and promote your existing role. Replace its UUID placeholder; do not run `provision-developer.sql`.
 3. Configure email confirmation, SMTP and authentication redirect URLs. See `docs/DEPLOYMENT.md`.
 4. Deploy both `supabase/functions/admin-invite/index.ts` and `supabase/functions/account-lifecycle/index.ts` with the Supabase CLI and set its server-only `APP_URL` secret.
