@@ -1,8 +1,55 @@
 begin;
 create extension if not exists pgcrypto;
-create table public.profiles(id uuid primary key references auth.users(id) on delete cascade,display_name text not null default '',created_at timestamptz not null default now());
-create table public.administrator_roles(user_id uuid primary key references public.profiles(id),role text not null check(role in ('super_admin','class_representative','assistant_representative','data_officer')),is_developer boolean not null default false,created_at timestamptz not null default now(),check(not is_developer or role='super_admin'));
-create unique index only_one_developer on public.administrator_roles(is_developer) where is_developer;
+
+-- Bootstrap safely supports a project where the earlier setup created only a
+-- temporary administrator_roles table. Existing Auth users receive profiles
+-- before the administrator foreign key is normalized.
+create table if not exists public.profiles(
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '',
+  created_at timestamptz not null default now()
+);
+insert into public.profiles(id, display_name)
+select id, coalesce(raw_user_meta_data->>'full_name', '')
+from auth.users
+on conflict (id) do nothing;
+
+create table if not exists public.administrator_roles(
+  user_id uuid primary key,
+  role text not null,
+  is_developer boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table public.administrator_roles add column if not exists role text;
+alter table public.administrator_roles add column if not exists is_developer boolean not null default false;
+alter table public.administrator_roles add column if not exists created_at timestamptz not null default now();
+
+-- Replace any temporary role checks/FK with the canonical application schema.
+do $$
+declare c record;
+begin
+  for c in
+    select conname from pg_constraint
+    where conrelid = 'public.administrator_roles'::regclass
+      and contype in ('c','f')
+  loop
+    execute format('alter table public.administrator_roles drop constraint %I', c.conname);
+  end loop;
+end $$;
+alter table public.administrator_roles
+  alter column role set not null,
+  add constraint administrator_roles_role_check
+    check(role in ('super_admin','class_representative','assistant_representative','data_officer')),
+  add constraint administrator_roles_developer_check
+    check(not is_developer or role='super_admin'),
+  add constraint administrator_roles_user_id_fkey
+    foreign key(user_id) references public.profiles(id) on delete cascade;
+
+-- The earlier setup used the label 'admin'. In this application the matching
+-- full-administrator permission level is named 'super_admin'.
+update public.administrator_roles set role='super_admin' where role='admin';
+create unique index if not exists only_one_developer
+  on public.administrator_roles(is_developer) where is_developer;
 create table public.registration_settings(id boolean primary key default true check(id),registration_open boolean not null default true,academic_year text not null default '2026/2027' check(academic_year ~ '^[0-9]{4}/[0-9]{4}$'),expected_population integer check(expected_population>0),support_email text not null default '' check(support_email='' or support_email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),class_contact text not null default '' check(length(class_contact)<=160),logo_path text,developer_bio text not null default 'Original System Developer, Platform Manager and Lead System Operator for the MedEng Y2S1 Class Portal.',developer_photo_path text,privacy_notice text not null default 'Your information is used for class registration, verification, membership and academic coordination. Authorized class administrators can access your record. Public verification displays your name, membership ID, course, academic designation and membership status only. Contact class leadership for data access, correction, retention and privacy enquiries.',updated_at timestamptz not null default now());
 insert into public.registration_settings(id) values(true);
 create table public.students(id uuid primary key default gen_random_uuid(),user_id uuid not null unique references public.profiles(id),full_name text not null check(length(full_name) between 3 and 120),registration_number text not null unique check(registration_number ~ '^[A-Z0-9/._-]{3,50}$'),gender text not null check(gender in ('Male','Female','Other','Prefer not to say')),date_of_birth date check(date_of_birth<=current_date),photo_path text,admission_year integer not null check(admission_year between 2000 and extract(year from current_date)::integer+1),email text not null check(email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),phone text not null check(phone ~ '^\+?[0-9 ()-]{7,20}$'),county text not null check(length(county) between 2 and 80),town text not null check(length(town) between 2 and 120),emergency_name text check(length(emergency_name)<=120),emergency_relationship text check(length(emergency_relationship)<=80),emergency_phone text check(emergency_phone is null or emergency_phone ~ '^\+?[0-9 ()-]{7,20}$'),institution text not null default 'KMTC' check(institution='KMTC'),course text not null default 'Medical Engineering' check(course='Medical Engineering'),academic_level integer not null default 2 check(academic_level=2),semester integer not null default 1 check(semester=1),academic_year text not null,registration_status text not null default 'pending' check(registration_status in ('pending','approved','rejected')),membership_status text not null default 'inactive' check(membership_status in ('active','inactive','suspended','revoked')),membership_id text not null unique default ('ME-Y2S1-'||upper(encode(gen_random_bytes(8),'hex'))),consent_at timestamptz not null default now(),consent_notice text not null,created_at timestamptz not null default now(),updated_at timestamptz not null default now(),check(registration_status='approved' or membership_status<>'active'));

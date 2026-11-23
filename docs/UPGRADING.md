@@ -4,7 +4,7 @@ The public Supabase connection is already in `.env`. Do not overwrite it with un
 
 The hosted project is reachable but portal tables are missing. In Supabase, apply `202611230001_foundation.sql` then `202611230002_community.sql`. If the first migration is already installed, back up/review and apply only the second. Never rerun the first against existing records.
 
-Configure SMTP and verified-email redirects, provision Dev Brian privately, deploy both `admin-invite` and `account-lifecycle`, and set the function `APP_URL` secret. Before deployment set `VITE_PUBLIC_APP_URL` to the actual canonical origin so emailed links and exported QR codes remain stable. No service credentials belong in the frontend.
+Configure SMTP and verified-email redirects, verify that the intended account has `super_admin` with `is_developer=false`, deploy both `admin-invite` and `account-lifecycle`, and set the function `APP_URL` secret. Do not run the developer provisioning script for a class administrator. Before deployment set `VITE_PUBLIC_APP_URL` to the actual canonical origin so emailed links and exported QR codes remain stable. No service credentials belong in the frontend.
 
 Use `npm run build`, `npm test`, `npm run test:db` and `npm run test:e2e` for local checks. Install Chromium for browser tests first with `npx playwright install chromium`. The browser test command uses isolated network fixtures, not real student accounts.
 

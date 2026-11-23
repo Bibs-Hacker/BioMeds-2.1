@@ -12,14 +12,14 @@ Requires **Node.js 22 LTS**, npm, a Supabase project and a Vercel account. Run c
 
 ```sh
 npm ci
-# The ZIP already includes .env with your public Supabase connection.
+# Copy .env.example to .env and enter your Supabase project URL and publishable key.
 # Set VITE_PUBLIC_APP_URL to your real public domain before production build.
 npm run dev
 ```
 
-1. Apply **both** migrations in filename order from `supabase/migrations/` to your empty Supabase project using its SQL Editor, or use `supabase link` and `supabase db push` with the CLI.
-2. Configure email confirmation, SMTP and authentication redirect URLs. See `docs/DEPLOYMENT.md`.
-3. Privately provision Dev Brian with `supabase/provision-developer.sql` after creating and confirming the genuine account. No password is stored in source.
+1. Back up the Supabase project, then apply **both** migrations in filename order from `supabase/migrations/`. The foundation migration safely reconciles the temporary `administrator_roles` table created during setup and converts the existing `admin` role to `super_admin`.
+2. Confirm your own email-confirmed Auth UUID, then run `supabase/provision-existing-admin.sql` only if the migration did not already preserve and promote your existing role. Replace its UUID placeholder; do not run `provision-developer.sql`.
+3. Configure email confirmation, SMTP and authentication redirect URLs. See `docs/DEPLOYMENT.md`.
 4. Deploy both `supabase/functions/admin-invite/index.ts` and `supabase/functions/account-lifecycle/index.ts` with the Supabase CLI and set its server-only `APP_URL` secret.
 5. Build and test: `npm run build`, `npm test`, `npm run test:e2e`.
 6. Import into Vercel, set the public environment variables from `.env.example`, then follow the production checklist.
@@ -58,14 +58,14 @@ Interface screenshots are in `docs/PREVIEWS.md`; private previews use test-only 
 | Data foundation and storage policies | `supabase/migrations/202611230001_foundation.sql` |
 | Academic directory, feedback, appearance and account closure | `src/pages/Academics.tsx`, `Feedback.tsx`, `Settings.tsx`, community migration and account-lifecycle function |
 | Secure administrator invites | `supabase/functions/admin-invite/index.ts` |
-| Initial trusted developer provisioning | `supabase/provision-developer.sql` |
+| Existing administrator provisioning (only if needed) | `supabase/provision-existing-admin.sql` |
 | Tests and release evidence | `tests/`, `supabase/tests/`, `docs/TESTING.md`, `docs/VALIDATION.md` |
 
 Pages are grouped by domain instead of one file per route. This is intentional; the route map is in `src/App.tsx`.
 
 ## Your supplied connection
 
-Your public Supabase URL and publishable key are included in `.env` and `.env.example`; no service-role credentials are included. This is a **Vite** app, so use `VITE_*` variables, not `NEXT_PUBLIC_*`. The supplied endpoint is reachable, but required portal tables are not yet available. Apply both migrations, provision the verified developer account and deploy both functions before hosted workflows can operate. The canonical public app domain has not been supplied; local development uses its own origin.
+Configure the public Supabase URL and publishable key in a local `.env` copied from `.env.example`; the deployment ZIP intentionally excludes local environment files. No service-role credentials belong in the frontend. This is a **Vite** app, so use `VITE_*` variables, not `NEXT_PUBLIC_*`. Apply both migrations and deploy both functions before hosted workflows can operate. The canonical public app domain has not been supplied; local development uses its own origin.
 
 ## Honest release status
 

@@ -2,9 +2,7 @@
 
 ## 1. Supabase foundation
 
-Use a new hosted project in a region selected after assessing Kenya Data Protection Act requirements, processor contracts and cross-border safeguards. Apply the foundation migration, then `202611230002_community.sql`. Existing V1 installations apply only the community migration after backup/review; do not rerun the foundation. It creates profiles, students, roles, membership cards/verifications, corrections, announcements, settings, audit logs and notifications. All tables have RLS enabled; no browser write grants exist for official records.
-
-Do not apply the migration blindly to a populated database. Back up first and review schema differences. With the CLI: `supabase login`, `supabase link --project-ref YOUR_REF`, then `supabase db push`.
+Use a hosted project in a region selected after assessing Kenya Data Protection Act requirements, processor contracts and cross-border safeguards. Back up the project before applying migrations. Apply `202611230001_foundation.sql`, then `202611230002_community.sql`. The foundation migration now reconciles the temporary `administrator_roles` table from the setup walkthrough: it creates/backfills profiles, normalizes the role constraints and foreign key, and converts the temporary `admin` role to the app's `super_admin` role while keeping `is_developer=false`. Do not rerun the foundation migration on a fully installed project; review schema history first. With the CLI: `supabase login`, `supabase link --project-ref YOUR_REF`, then `supabase db push`.
 
 ## 2. Authentication
 
@@ -14,18 +12,18 @@ In Authentication settings:
 - Require passwords of at least 12 characters. Configure custom SMTP, test verification/recovery/invite delivery, and enable suitable Auth abuse/rate limits and CAPTCHA as part of the launch hardening review.
 - Restrict Supabase dashboard access, require MFA for project owners, and keep recovery methods offline. Application administrator MFA is a recommended enhancement, not implemented in this version.
 
-## 3. Dev Brian account
+## 3. Class administrator account
 
-There is no default password and no public administrator registration.
+There is no default password and no public administrator registration. Create/sign in with the intended account through Supabase Authentication and confirm its email. The foundation migration preserves the previously created administrator row and upgrades the temporary `admin` label to `super_admin` with `is_developer=false`. Verify with:
 
-1. Privately create/invite the real Dev Brian account through the Supabase Authentication dashboard.
-2. Confirm its email and finish password setup. Verify ownership out of band.
-3. Copy its authentication UUID into `supabase/provision-developer.sql`, review, and run as database owner.
-4. Sign out/in. The genuine account now has the Super Administrator role, verified developer badge and System Control access.
+```sql
+select u.id, u.email, r.role, r.is_developer
+from auth.users u
+join public.administrator_roles r on r.user_id = u.id
+where u.email = 'YOUR_CONFIRMED_EMAIL';
+```
 
-The protected role row cannot be updated/deleted by ordinary admins, other super admins through the app, or public users. Its foreign-key prevents an ordinary delete of the corresponding profile/auth account. An infrastructure/database owner inherently remains a trusted break-glass authority: the guarantee does not defend against a project owner disabling triggers or altering schema. Do not distribute owner or service-role access to class representatives.
-
-For an already existing administrator account use the separately supplied trusted SQL script. New administrator accounts can be invited by authorized super administrators using the app once the Edge Function is deployed.
+Expected: `role = 'super_admin'` and `is_developer = false`. If no role row exists, use `supabase/provision-existing-admin.sql` as database owner after replacing its UUID placeholder with the verified Auth UUID. Do not run `provision-developer.sql` for an ordinary class administrator. New administrator accounts can be invited by authorized super administrators using the app once the Edge Function is deployed.
 
 ## 4. Edge Function
 
@@ -66,7 +64,7 @@ Complete `docs/TESTING.md`, review `docs/SECURITY.md`, test on actual smartphone
 
 ## 9. Activation, community and legal rollout
 
-The ZIP includes your public connection, not authorization to change the hosted database. The supplied project currently returns a missing-table response for portal settings. Apply migrations first. Do not leave registration open until you have set the actual controller/support details, reviewed policy text and agreed a retention schedule.
+The ZIP includes no local `.env` file; configure the frontend public Supabase variables from `.env.example`. Apply migrations before using portal settings. Do not leave registration open until you have set the actual controller/support details, reviewed policy text and agreed a retention schedule.
 
 New signups stage a sanitized image in browser IndexedDB; the file becomes unavailable after 48 hours and is uploaded privately after verified-email login. Verification on another device requires selecting the photo again. Account activation requires both current legal versions and the owned Storage object. Existing registered students can attach a missing photo once, then their recognition image remains locked. Submitted users retain the same photo when reaccepting policy updates. Policy publication increments the version; registration and activation reject stale acceptance. The scroll gate is a frontend aid, not legal proof of comprehension.
 

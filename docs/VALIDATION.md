@@ -33,7 +33,7 @@ The browser checks revealed missing exact accessible labels and incomplete trans
 
 1. Apply **both migrations in filename order** to the currently empty target project. Existing V1 installations apply only the second migration after backup/schema review.
 2. Configure email confirmation/SMTP, allowed `/student/setup` and password-reset redirects, and the real canonical public app URL.
-3. Privately provision the genuine **Dev Brian** identity using the included trusted script.
+3. Verify the intended class administrator has the `super_admin` role with `is_developer=false`; do not provision a developer identity for ordinary class administration.
 4. Deploy **admin-invite** and **account-lifecycle**, with server-only `APP_URL` matching the real origin. Service-role credentials stay in Supabase's function environment, never frontend variables.
 5. Set actual controller/support details, review legal documents and retention/branding, then run hosted staging acceptance before opening registration.
 

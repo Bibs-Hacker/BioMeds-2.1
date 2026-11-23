@@ -43,7 +43,7 @@ An optional PGlite test harness (`npm run test:db`) compiles and runs the same S
 
 ## Administrator acceptance
 
-- [ ] Privately provision genuine Dev Brian and inspect verified badge.
+- [ ] Verify the intended class administrator has `super_admin` and `is_developer=false`.
 - [ ] Invite each role; email invitation arrives and password setup works.
 - [ ] Inspect permissions through browser controls **and direct API/RPC calls** as every role.
 - [ ] Confirm ordinary admins cannot modify developer profile role/badge or remove it.
