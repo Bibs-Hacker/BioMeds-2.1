@@ -20,6 +20,7 @@ import {
   useToast,
 } from "../components/common";
 import { supabase } from "../services/supabase";
+import { PhotoEditor } from "../components/forms/PhotoEditor";
 export function AccountSetup() {
   const auth = useAuth();
   const profile = useData(ownProfile, ["profiles"]);
@@ -81,24 +82,16 @@ export function AccountSetup() {
           <p>
             Signed in as <b>{auth.session?.user.email}</b>
           </p>
-          <label>
-            Recognition photograph (required)
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-            />
-          </label>
-          {photo && <p className="success">Photo ready: {photo.name}</p>}
+          <div>
+            <label>Recognition photograph (required)</label>
+            <PhotoEditor value={photo} onChange={setPhoto} required={!profile.data?.account_photo_path} />
+          </div>
           {profile.data?.account_photo_path && !photo && (
             <p className="notice">
               Your existing recognition photograph will be retained.
             </p>
           )}
-          <small>
-            JPEG/PNG/WebP, up to 5 MB. If you verified on another gadget, select
-            your photo again.
-          </small>
+          <small>If you verified on another gadget, select your photo again. Your edited photo is uploaded privately.</small>
           <LegalAcceptance onChange={setReceipt} />
           <button
             disabled={

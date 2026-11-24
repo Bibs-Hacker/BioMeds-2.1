@@ -80,3 +80,10 @@ Exported files and printed cards cannot be remotely erased. Revocation is effect
 ## Attribution
 
 © 2026 KMTC Medical Engineering Y2S1 Class Portal. Developed and Managed by Dev Brian.
+
+
+## Recent submission-ready interface improvements
+
+- Student recognition photos use a click-or-drag upload area with a square crop preview, 90-degree rotation controls, zoom/crop, and JPEG normalization before private upload. The image editor accepts common image types and attempts browser-native decoding when mobile devices provide incomplete MIME metadata. Some HEIC/HEIF files still require conversion to JPG if the device browser cannot decode them.
+- Membership card downloads remain gated by verified email, approved registration, active membership, and an issued QR verification token. Administrators approve registrations from the registration management screen; public QR verification checks current membership status.
+- Appearance settings provide four explicit themes (Medical Light, Midnight Navy, Clinical Teal, High Contrast) and expanded font choices (Modern Sans, Poppins, Nunito, Humanist Sans, Readable Serif, Playfair Editorial, Roboto Slab, and JetBrains Mono). Web fonts load from Google Fonts when online and fall back to local system fonts otherwise.

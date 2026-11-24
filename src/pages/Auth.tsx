@@ -9,6 +9,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { supabase, appUrl, configured } from "../services/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { ErrorBox, PageTitle, useToast } from "../components/common";
+import { PhotoEditor } from "../components/forms/PhotoEditor";
 export function AuthPage({
   mode = "login",
 }: {
@@ -144,19 +145,11 @@ export function AuthPage({
         )}
         {mode === "signup" && (
           <>
-            <label>
-              Recognition photograph (required)
-              <input
-                required
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-              />
-              <small>
-                Use your own recognition photo, up to 5 MB. It is staged on this
-                device and uploaded privately after email verification.
-              </small>
-            </label>
+            <div>
+              <label>Recognition photograph (required)</label>
+              <PhotoEditor value={photo} onChange={setPhoto} required />
+              <small>Edited photo is staged on this device and uploaded privately after email verification.</small>
+            </div>
             <LegalAcceptance onChange={setReceipt} />
           </>
         )}

@@ -60,25 +60,8 @@ export async function signedPhoto(path: string | null) {
   return data.signedUrl;
 }
 export async function uploadPhoto(file: File, userId: string) {
-  if (
-    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-    file.size > 5 * 1024 * 1024
-  )
-    throw new Error("Choose a JPEG, PNG or WebP photo under 5 MB.");
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  const scale = Math.min(1, 800 / Math.max(bitmap.width, bitmap.height));
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("Unable to process photo"))),
-      "image/jpeg",
-      0.88,
-    ),
-  );
+  const { sanitizePhoto } = await import("../utils/images");
+  const blob = await sanitizePhoto(file);
   const path = `${userId}/${crypto.randomUUID()}.jpg`;
   const { error } = await supabase.storage
     .from("student-photos")

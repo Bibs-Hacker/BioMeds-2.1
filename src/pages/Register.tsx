@@ -22,6 +22,7 @@ import {
   Confirm,
 } from "../components/common";
 import type { Settings } from "../types";
+import { PhotoEditor } from "../components/forms/PhotoEditor";
 const steps = [
   "Personal",
   "Academic",
@@ -160,18 +161,11 @@ export function Register() {
                     </select>
                   </label>
                   {field("date_of_birth", "Date of birth", "date", true)}
-                  <label>
-                    Profile photograph (your activated photo is used by default)
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-                    />
-                    <small>
-                      JPEG, PNG or WebP, up to 5 MB. Metadata is removed before
-                      storage.
-                    </small>
-                  </label>
+                  <div className="full">
+                    <label>Profile photograph (your activated photo is used by default)</label>
+                    <PhotoEditor value={photo} onChange={setPhoto} />
+                    <small>Leave this blank to use the recognition photo already saved to your account.</small>
+                  </div>
                 </>
               )}
               {step === 1 && (
@@ -285,6 +279,8 @@ export function Register() {
                   let path: string | null = null;
                   if (photo)
                     path = await uploadPhoto(photo, auth.session!.user.id);
+                  else
+                    path = profile.data?.account_photo_path || null;
                   try {
                     await submitStudent({ ...values, photo_path: path });
                   } catch (e) {

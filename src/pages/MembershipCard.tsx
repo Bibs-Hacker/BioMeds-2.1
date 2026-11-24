@@ -159,10 +159,19 @@ export function MembershipCard() {
       ) : s.registration_status !== "approved" ||
         s.membership_status !== "active" ||
         !token ? (
-        <div className="notice">
-          Card unavailable. Registration: {s.registration_status}. Membership:{" "}
-          {s.membership_status}. Only approved, active students can download a
-          card.
+        <div className="panel card-gate">
+          <div className="notice">
+            <strong>Membership card not available yet</strong><br />
+            Registration: {s.registration_status}. Membership: {s.membership_status}.
+          </div>
+          <h3>How card verification works</h3>
+          <ol>
+            <li>Verify the email address used to create your portal account.</li>
+            <li>Submit your class registration and recognition photograph.</li>
+            <li>A class administrator checks your details and approves the registration.</li>
+            <li>Your membership must be active. The system then issues a card with a unique QR verification code.</li>
+          </ol>
+          <p className="muted">After approval, you can download the card as a PDF or image. Anyone checking the card can scan its QR code to see its current validity. A suspended, revoked or inactive membership will not verify as valid.</p>
         </div>
       ) : (
         <>

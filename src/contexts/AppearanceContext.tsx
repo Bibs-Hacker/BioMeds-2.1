@@ -10,13 +10,16 @@ export const themes = {
   dark: "Midnight Navy",
   teal: "Clinical Teal",
   contrast: "High Contrast",
-  system: "Match device",
 };
 export const fonts = {
-  system: "System Sans",
+  system: "Modern Sans",
+  poppins: "Poppins · Geometric",
+  nunito: "Nunito · Rounded",
   humanist: "Humanist Sans",
   serif: "Readable Serif",
-  mono: "Engineering Mono",
+  editorial: "Playfair · Editorial",
+  slab: "Roboto Slab · Technical",
+  mono: "JetBrains · Mono",
 };
 type Preferences = {
   theme: keyof typeof themes;
@@ -26,7 +29,7 @@ type Preferences = {
   motion: "system" | "reduced";
 };
 export const appearanceDefaults: Preferences = {
-  theme: "system",
+  theme: "light",
   font: "system",
   size: "standard",
   density: "comfortable",
@@ -35,7 +38,7 @@ export const appearanceDefaults: Preferences = {
 export function normalizeAppearance(value: Partial<Preferences>): Preferences {
   value = value && typeof value === "object" ? value : {};
   return {
-    theme: value.theme && value.theme in themes ? value.theme : "system",
+    theme: value.theme && value.theme in themes ? value.theme : "light",
     font: value.font && value.font in fonts ? value.font : "system",
     size: value.size === "large" ? "large" : "standard",
     density: value.density === "compact" ? "compact" : "comfortable",
@@ -58,28 +61,18 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     }
   });
   useEffect(() => {
-    const media = matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const el = document.documentElement;
-      el.dataset.theme =
-        preferences.theme === "system"
-          ? media.matches
-            ? "dark"
-            : "light"
-          : preferences.theme;
-      el.dataset.font = preferences.font;
-      el.dataset.size = preferences.size;
-      el.dataset.density = preferences.density;
-      el.dataset.motion = preferences.motion;
-    };
-    apply();
-    media.addEventListener("change", apply);
+    const el = document.documentElement;
+    el.dataset.theme = preferences.theme;
+    el.dataset.font = preferences.font;
+    el.dataset.size = preferences.size;
+    el.dataset.density = preferences.density;
+    el.dataset.motion = preferences.motion;
     try {
       localStorage.setItem("medeng-appearance", JSON.stringify(preferences));
     } catch {
       /* Private-mode storage can be unavailable; preferences still apply in-memory. */
     }
-    return () => media.removeEventListener("change", apply);
+    return undefined;
   }, [preferences]);
   return (
     <C.Provider
