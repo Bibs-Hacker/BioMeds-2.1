@@ -21,6 +21,8 @@ export function AuthPage({
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [canResend, setCanResend] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const auth = useAuth();
@@ -73,8 +75,9 @@ export function AuthPage({
                 },
               });
               if (error) throw error;
+              setCanResend(true);
               setMessage(
-                "Check your email to verify your account, then activate with your staged recognition photo and policy acceptance. Registration stays locked until activation.",
+                "Your sign-up request was accepted. Supabase should send a verification email if email delivery is configured and the address is eligible. Check Spam/Junk and All Mail. If it does not arrive, use Resend verification email below. Your registration remains locked until verification and activation.",
               );
             } else if (mode === "login") {
               const { error } = await supabase.auth.signInWithPassword({
@@ -158,6 +161,34 @@ export function AuthPage({
           <div className="success" role="status">
             {message}
           </div>
+        )}
+        {mode === "signup" && canResend && (
+          <button
+            type="button"
+            className="secondary"
+            disabled={resending || !email.trim()}
+            onClick={async () => {
+              setResending(true);
+              setError("");
+              try {
+                const { error } = await supabase.auth.resend({
+                  type: "signup",
+                  email: email.trim(),
+                  options: { emailRedirectTo: appUrl + "/student/setup" },
+                });
+                if (error) throw error;
+                setMessage(
+                  "Supabase accepted the resend request. Check Spam/Junk and All Mail. If no message arrives, ask the project administrator to inspect Authentication logs and SMTP delivery settings.",
+                );
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setResending(false);
+              }
+            }}
+          >
+            {resending ? "Resending…" : "Resend verification email"}
+          </button>
         )}
         <button disabled={busy || (mode === "signup" && (!photo || !receipt))}>
           {busy

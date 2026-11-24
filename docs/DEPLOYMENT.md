@@ -69,3 +69,10 @@ The ZIP includes no local `.env` file; configure the frontend public Supabase va
 New signups stage a sanitized image in browser IndexedDB; the file becomes unavailable after 48 hours and is uploaded privately after verified-email login. Verification on another device requires selecting the photo again. Account activation requires both current legal versions and the owned Storage object. Existing registered students can attach a missing photo once, then their recognition image remains locked. Submitted users retain the same photo when reaccepting policy updates. Policy publication increments the version; registration and activation reject stale acceptance. The scroll gate is a frontend aid, not legal proof of comprehension.
 
 Super administrators and class representatives manage lecturers/units and review feedback. Assistant representatives and data officers can read the student academic directory but cannot manage it. Only super administrators handle account closure and legal publication. Test uploaded-photo and deletion concurrency against the actual hosted Storage gateway, not just local SQL. A PostgreSQL owner remains a break-glass trust authority.
+
+
+## Email verification delivery
+
+The registration screen can only report that Supabase accepted the sign-up/resend request; it cannot guarantee inbox delivery. For hosted projects, configure a custom SMTP provider in Supabase Dashboard → Authentication → SMTP Settings. Supabase's built-in email service is intended for testing: it only sends to addresses belonging to the Supabase organization and is limited to 2 emails per hour. Check Authentication logs for `email_address_not_authorized`, `over_email_send_rate_limit`, or SMTP errors. Also check the recipient's Spam/Junk and All Mail folders and verify the Auth email template and Site URL / redirect URLs. Do not disable email confirmation for a public deployment.
+
+The sign-up page includes a Resend verification email action after a successful sign-up response. Resending is subject to the same provider and rate limits.
